@@ -16,7 +16,8 @@ from ..models.settings_model import SettingsModel
 # Импорты core компонентов
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from src.core.ocr_processor import OCRProcessor, OCRBatchResult
+from src.core.ocr_processor import OCRProcessor
+from src.core.types import OCRBatchResult
 
 
 class MainPresenter:

@@ -19,10 +19,9 @@ except ImportError:
 # Добавляем путь к src директории
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from gui.presenters.main_presenter import MainPresenter
-from gui.views.main_view import MainView
-from gui.widgets.custom_widgets import StatusBar, add_tooltip
-
+from src.gui.presenters.main_presenter import MainPresenter
+from src.gui.views.main_view import MainView
+from src.gui.widgets.custom_widgets import StatusBar, add_tooltip
 
 class MainWindow:
     """

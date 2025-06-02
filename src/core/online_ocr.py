@@ -15,7 +15,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.LLM_manager import ChatLLMAgent
-from .ocr_processor import OCRResult  # Импорт из родительского модуля
+from .types import OCRResult  # Импорт из родительского модуля
 
 
 class OnlineOCRProcessor:

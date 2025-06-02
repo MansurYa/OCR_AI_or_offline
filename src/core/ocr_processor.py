@@ -7,34 +7,14 @@ import os
 import json
 import logging
 from typing import List, Dict, Any, Optional, Callable
-from dataclasses import dataclass
 from pathlib import Path
 
+from .types import OCRResult, OCRBatchResult
 from .offline_ocr import OfflineOCRProcessor
 from .online_ocr import OnlineOCRProcessor
 from .image_sorter import ImageSorter
 from .prompt_manager import PromptManager
 from .result_formatter import ResultFormatter
-
-
-@dataclass
-class OCRResult:
-    """Результат OCR обработки для одного изображения."""
-    file_path: str
-    success: bool
-    text_content: str
-    error_message: Optional[str] = None
-    processing_time: float = 0.0
-
-
-@dataclass
-class OCRBatchResult:
-    """Результат обработки группы изображений."""
-    results: List[OCRResult]
-    total_files: int
-    successful_files: int
-    total_processing_time: float
-    output_file_path: str
 
 
 class OCRProcessor:
@@ -43,14 +23,19 @@ class OCRProcessor:
     Управляет выбором режима обработки, сортировкой файлов и объединением результатов.
     """
 
+    # ИСПРАВИТЬ метод __init__ в OCRProcessor:
+
     def __init__(self, config_path: str = "config.json"):
         """
         Инициализация OCR процессора.
 
         :param config_path: Путь к файлу конфигурации
         """
-        self.config = self._load_config(config_path)
+        # СНАЧАЛА инициализируем logger
         self.logger = self._setup_logging()
+
+        # ПОТОМ загружаем config
+        self.config = self._load_config(config_path)
 
         # Инициализируем компоненты
         self.image_sorter = ImageSorter()

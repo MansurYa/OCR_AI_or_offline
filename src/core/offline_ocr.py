@@ -14,7 +14,7 @@ from pathlib import Path
 import pytesseract
 from PIL import Image, ImageOps
 
-from .ocr_processor import OCRResult  # Импорт из родительского модуля
+from .types import OCRResult
 
 
 class OfflineOCRProcessor:

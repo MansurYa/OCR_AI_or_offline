@@ -1,20 +1,25 @@
 {
     "openai_api_key": "sk-your-openai-key",
     "openai_organization": "org-your-org-id",
-    "openrouter_api_key": "sk-or-your-openrouter-key",
+    "openrouter_api_key": "",
     "model_name": "gpt-4o-mini",
-    "larger_model_name": "gpt-4o",
-    "temperature": 0.1,
-    "max_response_tokens": 4095,
-    "max_total_tokens": 30000,
-    "use_openai_or_openrouter": "openai",
-
+    "larger_model_name": "gpt-4o-mini",
+    "temperature": 0.0,
+    "max_response_tokens": 16383,
+    "max_total_tokens": 60000,
+    "use_openai_or_openrouter": "openrouter",
     "ocr_settings": {
         "offline": {
             "default_language": "rus",
             "psm_mode": 3,
             "tessdata_dir": "~/tessdata",
-            "supported_formats": [".png", ".jpg", ".jpeg", ".tiff", ".bmp"]
+            "supported_formats": [
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".tiff",
+                ".bmp"
+            ]
         },
         "online": {
             "default_prompt": "classic_ocr",
@@ -23,20 +28,33 @@
             "retry_attempts": 3
         }
     },
-
     "gui_settings": {
-        "window_size": "1000x700",
+        "window_size": "1440x793",
         "theme": "light",
         "auto_save_settings": true,
         "show_image_preview": true,
         "preview_size": 150
     },
-
     "sorting_options": [
-        {"name": "Natural (по номерам)", "key": "natural"},
-        {"name": "По времени создания", "key": "creation_time"},
-        {"name": "По времени изменения", "key": "modification_time"},
-        {"name": "Алфавитная сортировка", "key": "alphabetical"},
-        {"name": "По размеру файла", "key": "file_size"}
+        {
+            "name": "Natural (по номерам)",
+            "key": "natural"
+        },
+        {
+            "name": "По времени создания",
+            "key": "creation_time"
+        },
+        {
+            "name": "По времени изменения",
+            "key": "modification_time"
+        },
+        {
+            "name": "Алфавитная сортировка",
+            "key": "alphabetical"
+        },
+        {
+            "name": "По размеру файла",
+            "key": "file_size"
+        }
     ]
 }

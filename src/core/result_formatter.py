@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 from pathlib import Path
 
-from .ocr_processor import OCRResult  # Импорт из родительского модуля
+from .types import OCRResult  # Импорт из родительского модуля
 
 
 class ResultFormatter:

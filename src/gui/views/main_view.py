@@ -24,7 +24,7 @@ except ImportError:
     OCRBatchResult = None
 
 
-class MainView:
+class MainView(tk.Frame):  # ДОБАВИТЬ наследование от tk.Frame
     """
     Главное представление приложения.
     Координирует все GUI компоненты и взаимодействует с presenter.
@@ -36,6 +36,7 @@ class MainView:
 
         :param parent: Родительский виджет
         """
+        super().__init__(parent)  # ДОБАВИТЬ вызов super().__init__
         self.parent = parent
         self.logger = logging.getLogger(__name__)
 
