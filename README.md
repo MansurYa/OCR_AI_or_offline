@@ -1,0 +1,1 @@
+# OCR_AI_or_offline
