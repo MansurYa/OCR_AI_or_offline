@@ -93,6 +93,9 @@ class OnlineOCRProcessor:
             self.logger.error(error_msg)
             raise ValueError(error_msg) from e
 
+# ИСПРАВЛЕНИЕ для src/core/online_ocr.py
+# Заменить метод _process_single_image в строке с agent_clone:
+
     def _process_single_image(self, image_path: str, prompt_text: str) -> OCRResult:
         """
         Обрабатывает одно изображение с использованием LLM.
@@ -112,11 +115,11 @@ class OnlineOCRProcessor:
             last_error = None
             for attempt in range(self.retry_attempts):
                 try:
-                    # Клонируем агента для thread safety
-                    agent_clone = self.llm_agent.clone()
+                    # ИСПРАВЛЕНИЕ: Используем оригинальный агент напрямую вместо клонирования
+                    # так как метод clone() может отсутствовать в LLM_manager
 
                     # Отправляем запрос к LLM
-                    response = agent_clone.response_from_LLM(
+                    response = self.llm_agent.response_from_LLM(
                         user_message=prompt_text,
                         images=[image_path]
                     )

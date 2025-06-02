@@ -1,7 +1,7 @@
 {
     "openai_api_key": "sk-your-openai-key",
     "openai_organization": "org-your-org-id",
-    "openrouter_api_key": "sk-or-v1-",
+    "openrouter_api_key": "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",
     "model_name": "openai/gpt-4o-mini",
     "larger_model_name": "openai/gpt-4o-mini",
     "temperature": 0.0,

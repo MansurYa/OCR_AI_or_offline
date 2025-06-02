@@ -24,7 +24,7 @@ except ImportError:
     OCRBatchResult = None
 
 
-class MainView(tk.Frame):  # ДОБАВИТЬ наследование от tk.Frame
+class MainView(tk.Frame):
     """
     Главное представление приложения.
     Координирует все GUI компоненты и взаимодействует с presenter.
@@ -36,7 +36,7 @@ class MainView(tk.Frame):  # ДОБАВИТЬ наследование от tk.F
 
         :param parent: Родительский виджет
         """
-        super().__init__(parent)  # ДОБАВИТЬ вызов super().__init__
+        super().__init__(parent)
         self.parent = parent
         self.logger = logging.getLogger(__name__)
 
@@ -50,13 +50,24 @@ class MainView(tk.Frame):  # ДОБАВИТЬ наследование от tk.F
         self.settings_view: Optional[SettingsView] = None
         self.progress_view: Optional[ProgressView] = None
 
-        # Кнопки управления
-        self.start_button: Optional[tk.Button] = None
-        self.clear_button: Optional[tk.Button] = None
-        self.sort_button: Optional[tk.Button] = None
+        # Кнопки управления (теперь Frame-based)
+        self.start_button: Optional[tk.Frame] = None
+        self.clear_button: Optional[tk.Frame] = None
+        self.sort_button: Optional[tk.Frame] = None
 
         # Статусная строка
         self.status_label: Optional[tk.Label] = None
+
+        # Ссылка на правую панель для динамического изменения размера
+        self._right_panel_ref: Optional[tk.LabelFrame] = None
+
+        # Цвета для кнопок
+        self.button_colors = {
+            'primary': {'bg': '#3498db', 'fg': 'white', 'hover_bg': '#2980b9'},
+            'success': {'bg': '#27ae60', 'fg': 'white', 'hover_bg': '#229954'},
+            'danger': {'bg': '#e74c3c', 'fg': 'white', 'hover_bg': '#c0392b'},
+            'warning': {'bg': '#f39c12', 'fg': 'white', 'hover_bg': '#e67e22'}
+        }
 
         # Создаем GUI
         self._create_gui()
@@ -130,69 +141,78 @@ class MainView(tk.Frame):  # ДОБАВИТЬ наследование от tk.F
         help_btn.pack(side=tk.RIGHT, padx=(5, 0))
 
     def _create_main_content(self) -> None:
-        """Создает основное содержимое."""
+        """Создает основное содержимое с исправленными пропорциями."""
         # Основной контейнер с двумя панелями
         main_content = tk.Frame(self.main_frame)
         main_content.pack(fill=tk.BOTH, expand=True)
 
+        # ИСПРАВЛЕНИЕ 1: Оптимизированные пропорции панелей
         # Левая панель - изображения
         left_panel = tk.LabelFrame(main_content, text="📁 Изображения", padx=5, pady=5)
         left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
 
-        # Правая панель - настройки
+        # ИСПРАВЛЕНИЕ: Правая панель с увеличенной шириной (23-25% экрана)
         right_panel = tk.LabelFrame(main_content, text="⚙️ Настройки OCR", padx=5, pady=5)
         right_panel.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
-        right_panel.configure(width=300)
+
+        # Адаптивная ширина правой панели: 280-360px (23-25% экрана)
+        self.update_idletasks()
+        window_width = self.winfo_width() or 1000
+        # Увеличиваем диапазон: min 280px, max 360px, оптимально 23-25%
+        optimal_right_width = min(max(int(window_width * 0.24), 280), 360)
+
+        right_panel.configure(width=optimal_right_width)
         right_panel.pack_propagate(False)
+
+        # Сохраняем ссылку на правую панель
+        self._right_panel_ref = right_panel
+
+        # Привязываем обработчик изменения размера окна
+        self.bind('<Configure>', self.on_window_resize)
 
         self._create_images_panel(left_panel)
         self._create_settings_panel(right_panel)
 
     def _create_images_panel(self, parent: tk.Widget) -> None:
-        """
-        Создает панель для работы с изображениями.
-
-        :param parent: Родительский виджет
-        """
+        """Создает панель для работы с изображениями с исправленными кнопками."""
         # Drag & Drop область
         self.drag_drop_frame = DragDropFrame(parent)
-        self.drag_drop_frame.pack(fill=tk.X, pady=(0, 10))
+        self.drag_drop_frame.pack(fill=tk.X, pady=(0, 8))
 
-        # Кнопки добавления файлов
+        # ИСПРАВЛЕНИЕ 2: Кнопки как Frame+Label для обхода системных ограничений
         buttons_frame = tk.Frame(parent)
-        buttons_frame.pack(fill=tk.X, pady=(0, 10))
+        buttons_frame.pack(fill=tk.X, pady=(0, 8))
 
-        add_files_btn = tk.Button(
+        # Кнопка добавления файлов
+        add_files_btn = self._create_button_frame(
             buttons_frame,
             text="📁 Добавить файлы",
             command=self._on_add_files_click,
-            bg="#3498db",
-            fg="white",
-            padx=15,
-            pady=5
+            style='primary',
+            padx=12,
+            pady=4
         )
         add_files_btn.pack(side=tk.LEFT, padx=(0, 5))
 
-        add_folder_btn = tk.Button(
+        # Кнопка добавления папки
+        add_folder_btn = self._create_button_frame(
             buttons_frame,
             text="📂 Добавить папку",
             command=self._on_add_folder_click,
-            bg="#3498db",
-            fg="white",
-            padx=15,
-            pady=5
+            style='primary',
+            padx=12,
+            pady=4
         )
         add_folder_btn.pack(side=tk.LEFT, padx=5)
 
         # Кнопка очистки
-        self.clear_button = tk.Button(
+        self.clear_button = self._create_button_frame(
             buttons_frame,
             text="🗑️ Очистить",
             command=self._on_clear_click,
-            bg="#e74c3c",
-            fg="white",
-            padx=15,
-            pady=5
+            style='danger',
+            padx=12,
+            pady=4
         )
         self.clear_button.pack(side=tk.RIGHT)
 
@@ -206,53 +226,187 @@ class MainView(tk.Frame):  # ДОБАВИТЬ наследование от tk.F
 
         :param parent: Родительский виджет
         """
-        # Настройки OCR
+        # Настройки OCR - используем существующий SettingsView без изменений
         self.settings_view = SettingsView(parent)
         self.settings_view.pack(fill=tk.BOTH, expand=True)
 
     def _create_control_buttons(self) -> None:
-        """Создает кнопки управления обработкой."""
+        """Создает кнопки управления обработкой с оптимизированными размерами."""
         control_frame = tk.Frame(self.main_frame)
-        control_frame.pack(fill=tk.X, pady=(10, 0))
+        control_frame.pack(fill=tk.X, pady=(8, 0))
 
         # Кнопка сортировки
-        self.sort_button = tk.Button(
+        self.sort_button = self._create_button_frame(
             control_frame,
             text="🔢 Сортировать",
             command=self._on_sort_click,
-            bg="#f39c12",
-            fg="white",
-            padx=20,
-            pady=8
+            style='warning',
+            padx=15,
+            pady=6
         )
         self.sort_button.pack(side=tk.LEFT)
 
         # Основная кнопка запуска
-        self.start_button = tk.Button(
+        self.start_button = self._create_button_frame(
             control_frame,
             text="🚀 Начать обработку OCR",
             command=self._on_start_processing_click,
-            bg="#27ae60",
-            fg="white",
-            font=("Arial", 12, "bold"),
-            padx=30,
-            pady=10
+            style='success',
+            font=('Arial', 11, 'bold'),
+            padx=20,
+            pady=6
         )
         self.start_button.pack(side=tk.RIGHT)
 
     def _create_status_bar(self) -> None:
-        """Создает статусную строку."""
+        """Создает статусную строку с оптимизированной высотой."""
         status_frame = tk.Frame(self.main_frame, relief=tk.SUNKEN, bd=1)
-        status_frame.pack(fill=tk.X, pady=(5, 0))
+        status_frame.pack(fill=tk.X, pady=(3, 0))
 
         self.status_label = tk.Label(
             status_frame,
             text="Готов к работе",
             anchor=tk.W,
             padx=5,
-            pady=2
+            pady=1,
+            font=('Arial', 9)
         )
         self.status_label.pack(fill=tk.X)
+
+    def _create_button_frame(self, parent: tk.Widget, text: str, command, style: str, **kwargs) -> tk.Frame:
+        """
+        Создает кнопку-фрейм, обходящую ограничения системных тем.
+
+        :param parent: Родительский виджет
+        :param text: Текст кнопки
+        :param command: Команда при нажатии
+        :param style: Стиль кнопки ('primary', 'success', 'danger', 'warning')
+        :param kwargs: Дополнительные параметры
+        :return: Frame-кнопка
+        """
+        colors = self.button_colors.get(style, self.button_colors['primary'])
+
+        # Создаем контейнер-фрейм
+        button_frame = tk.Frame(
+            parent,
+            bg=colors['bg'],
+            relief=tk.RAISED,
+            bd=2,
+            cursor='hand2'
+        )
+
+        # Создаем внутренний label с текстом
+        label = tk.Label(
+            button_frame,
+            text=text,
+            bg=colors['bg'],
+            fg=colors['fg'],
+            font=kwargs.get('font', ('Arial', 9, 'bold')),
+            cursor='hand2'
+        )
+
+        # Размещаем label с отступами
+        padx = kwargs.get('padx', 12)
+        pady = kwargs.get('pady', 4)
+        label.pack(expand=True, fill=tk.BOTH, padx=padx, pady=pady)
+
+        # Сохраняем ссылки для hover эффектов
+        button_frame._label = label
+        button_frame._original_bg = colors['bg']
+        button_frame._hover_bg = colors['hover_bg']
+        button_frame._fg = colors['fg']
+        button_frame._enabled = True
+
+        # Привязываем события
+        for widget in [button_frame, label]:
+            widget.bind('<Button-1>', lambda e: self._on_button_click(button_frame, command))
+            widget.bind('<Enter>', lambda e: self._on_button_hover(button_frame, True))
+            widget.bind('<Leave>', lambda e: self._on_button_hover(button_frame, False))
+
+        return button_frame
+
+    def _on_button_click(self, button_frame: tk.Frame, command) -> None:
+        """
+        Обработчик клика по кнопке-фрейму.
+
+        :param button_frame: Frame-кнопка
+        :param command: Команда для выполнения
+        """
+        if hasattr(button_frame, '_enabled') and button_frame._enabled and command:
+            # Эффект нажатия
+            button_frame.configure(relief=tk.SUNKEN)
+            button_frame.after(100, lambda: button_frame.configure(relief=tk.RAISED))
+
+            # Выполняем команду
+            try:
+                command()
+            except Exception as e:
+                self.logger.error(f"Ошибка выполнения команды кнопки: {e}")
+
+    def _on_button_hover(self, button_frame: tk.Frame, is_entering: bool) -> None:
+        """
+        Обработчик hover эффекта для кнопки-фрейма.
+
+        :param button_frame: Frame-кнопка
+        :param is_entering: True при входе курсора, False при выходе
+        """
+        if not hasattr(button_frame, '_enabled') or not button_frame._enabled:
+            return
+
+        if is_entering:
+            # Эффект при наведении
+            bg_color = button_frame._hover_bg
+        else:
+            # Восстановление оригинального цвета
+            bg_color = button_frame._original_bg
+
+        # Применяем цвет к фрейму и label
+        button_frame.configure(bg=bg_color)
+        if hasattr(button_frame, '_label'):
+            button_frame._label.configure(bg=bg_color)
+
+    def _set_button_enabled(self, button_frame: tk.Frame, enabled: bool) -> None:
+        """
+        Включает/отключает кнопку-фрейм.
+
+        :param button_frame: Frame-кнопка
+        :param enabled: True для включения, False для отключения
+        """
+        button_frame._enabled = enabled
+
+        if enabled:
+            # Включаем кнопку
+            bg_color = button_frame._original_bg
+            fg_color = button_frame._fg
+            cursor = 'hand2'
+        else:
+            # Отключаем кнопку
+            bg_color = '#bdc3c7'
+            fg_color = '#7f8c8d'
+            cursor = 'arrow'
+
+        button_frame.configure(bg=bg_color, cursor=cursor)
+        if hasattr(button_frame, '_label'):
+            button_frame._label.configure(bg=bg_color, fg=fg_color, cursor=cursor)
+
+    def on_window_resize(self, event) -> None:
+        """
+        Обработчик изменения размера окна для адаптации пропорций панелей.
+
+        :param event: Событие изменения размера
+        """
+        # Обновляем только если это главное окно
+        if event.widget == self.parent:
+            # Пересчитываем ширину правой панели
+            window_width = event.width
+            optimal_right_width = min(max(int(window_width * 0.24), 280), 360)
+
+            # Обновляем ширину правой панели если она существует
+            if hasattr(self, '_right_panel_ref') and self._right_panel_ref:
+                try:
+                    self._right_panel_ref.configure(width=optimal_right_width)
+                except tk.TclError:
+                    pass
 
     # ========================
     # Обработчики событий
@@ -444,20 +598,18 @@ class MainView(tk.Frame):  # ДОБАВИТЬ наследование от tk.F
         :param state: Состояние обработки
         """
         if state.is_running:
-            self.start_button.configure(
-                text="⏸️ Обработка...",
-                state=tk.DISABLED,
-                bg="#e67e22"
-            )
+            # Обновляем текст и отключаем кнопку запуска
+            if hasattr(self.start_button, '_label'):
+                self.start_button._label.configure(text="⏸️ Обработка...")
+            self._set_button_enabled(self.start_button, False)
 
             if state.current_filename:
                 self.update_status(f"Обрабатывается: {state.current_filename}")
         else:
-            self.start_button.configure(
-                text="🚀 Начать обработку OCR",
-                state=tk.NORMAL,
-                bg="#27ae60"
-            )
+            # Восстанавливаем кнопку запуска
+            if hasattr(self.start_button, '_label'):
+                self.start_button._label.configure(text="🚀 Начать обработку OCR")
+            self._set_button_enabled(self.start_button, True)
 
             if state.progress_percentage >= 100:
                 self.update_status("Обработка завершена")
@@ -488,16 +640,16 @@ class MainView(tk.Frame):  # ДОБАВИТЬ наследование от tk.F
 
         # Кнопка очистки
         if self.clear_button:
-            self.clear_button.configure(state=tk.NORMAL if has_files and not is_processing else tk.DISABLED)
+            self._set_button_enabled(self.clear_button, has_files and not is_processing)
 
         # Кнопка сортировки
         if self.sort_button:
-            self.sort_button.configure(state=tk.NORMAL if has_files and not is_processing else tk.DISABLED)
+            self._set_button_enabled(self.sort_button, has_files and not is_processing)
 
         # Кнопка запуска
         if self.start_button:
             can_start = self.presenter.can_start_processing()
-            self.start_button.configure(state=tk.NORMAL if can_start else tk.DISABLED)
+            self._set_button_enabled(self.start_button, can_start)
 
     # =======================
     # Обработчики событий от presenter

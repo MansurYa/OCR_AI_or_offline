@@ -52,6 +52,9 @@ class SettingsView(tk.Frame):
         self.metadata_var = tk.BooleanVar(value=True)
 
         # Виджеты
+        self.canvas: Optional[tk.Canvas] = None
+        self.scrollbar: Optional[ttk.Scrollbar] = None
+        self.scrollable_frame: Optional[tk.Frame] = None
         self.mode_frame: Optional[tk.LabelFrame] = None
         self.offline_frame: Optional[tk.LabelFrame] = None
         self.online_frame: Optional[tk.LabelFrame] = None
@@ -72,37 +75,130 @@ class SettingsView(tk.Frame):
         self.update_from_model()
 
     def _create_gui(self) -> None:
-        """Создает интерфейс панели настроек."""
-        # Создаем прокручиваемую область
-        canvas = tk.Canvas(self)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        scrollable_frame = tk.Frame(canvas)
+        """Создает интерфейс панели настроек с исправленным scrollbar."""
+        # ИСПРАВЛЕНИЕ: Создаем контейнер для canvas и scrollbar
+        main_container = tk.Frame(self)
+        main_container.pack(fill=tk.BOTH, expand=True)
 
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        # Создаем Canvas для прокручиваемого содержимого
+        self.canvas = tk.Canvas(
+            main_container,
+            highlightthickness=0,
+            bg="#f8f9fa"  # Светлый фон для лучшей видимости
         )
 
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        # КРИТИЧНО: Создаем Scrollbar с принудительной видимостью
+        self.scrollbar = ttk.Scrollbar(
+            main_container,
+            orient="vertical",
+            command=self.canvas.yview
+        )
 
-        # Размещаем компоненты
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        # Создаем прокручиваемый фрейм
+        self.scrollable_frame = tk.Frame(self.canvas, bg="#f8f9fa")
+
+        # Конфигурируем прокрутку
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self._on_frame_configure()
+        )
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        # ИСПРАВЛЕНИЕ: Правильное размещение элементов с использованием grid
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Настраиваем веса grid для корректного расширения
+        main_container.grid_rowconfigure(0, weight=1)
+        main_container.grid_columnconfigure(0, weight=1)
 
         # Создаем разделы настроек
-        self._create_mode_section(scrollable_frame)
-        self._create_sort_section(scrollable_frame)
-        self._create_offline_section(scrollable_frame)
-        self._create_online_section(scrollable_frame)
-        self._create_output_section(scrollable_frame)
-        self._create_additional_section(scrollable_frame)
+        self._create_mode_section(self.scrollable_frame)
+        self._create_sort_section(self.scrollable_frame)
+        self._create_offline_section(self.scrollable_frame)
+        self._create_online_section(self.scrollable_frame)
+        self._create_output_section(self.scrollable_frame)
+        self._create_additional_section(self.scrollable_frame)
+
+        # ДОПОЛНИТЕЛЬНО: Принудительно обновляем scrollregion после создания контента
+        self.after(100, self._force_scrollbar_update)
 
         # Привязываем прокрутку колесиком мыши
-        def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        self._bind_mousewheel()
 
-        canvas.bind("<MouseWheel>", _on_mousewheel)
+    def _on_frame_configure(self) -> None:
+        """Обработчик изменения размера прокручиваемого фрейма."""
+        # Обновляем scrollregion для включения всего содержимого
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+        # ИСПРАВЛЕНИЕ: Принудительно показываем scrollbar если содержимое больше видимой области
+        self._update_scrollbar_visibility()
+
+    def _force_scrollbar_update(self) -> None:
+        """Принудительно обновляет состояние scrollbar."""
+        try:
+            self.canvas.update_idletasks()
+            self.scrollable_frame.update_idletasks()
+
+            # Получаем размеры
+            canvas_height = self.canvas.winfo_height()
+            content_height = self.scrollable_frame.winfo_reqheight()
+
+            # Обновляем scrollregion
+            self.canvas.configure(scrollregion=(0, 0, 0, content_height))
+
+            # Логируем для отладки
+            self.logger.debug(f"Canvas height: {canvas_height}, Content height: {content_height}")
+
+            # Если содержимое больше видимой области, scrollbar должен быть активен
+            if content_height > canvas_height:
+                self.logger.debug("Scrollbar should be visible")
+
+        except Exception as e:
+            self.logger.error(f"Ошибка обновления scrollbar: {e}")
+
+    def _update_scrollbar_visibility(self) -> None:
+        """Обновляет видимость scrollbar в зависимости от содержимого."""
+        try:
+            canvas_height = self.canvas.winfo_height()
+            content_height = self.scrollable_frame.winfo_reqheight()
+
+            # Если содержимое больше видимой области, показываем scrollbar
+            if content_height > canvas_height and canvas_height > 1:
+                # Scrollbar уже видим, просто обновляем его состояние
+                self.scrollbar.set(*self.canvas.yview())
+
+        except Exception as e:
+            self.logger.error(f"Ошибка обновления видимости scrollbar: {e}")
+
+    def _bind_mousewheel(self) -> None:
+        """Привязывает прокрутку колесиком мыши к области настроек."""
+        def _on_mousewheel(event):
+            # Прокручиваем только если scrollbar активен
+            try:
+                self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            except:
+                pass
+
+        def bind_mousewheel_recursive(widget):
+            """Рекурсивно привязывает mousewheel ко всем дочерним виджетам."""
+            try:
+                widget.bind("<MouseWheel>", _on_mousewheel)
+                # Для macOS
+                widget.bind("<Button-4>", lambda e: _on_mousewheel(type('event', (), {'delta': 120})()))
+                widget.bind("<Button-5>", lambda e: _on_mousewheel(type('event', (), {'delta': -120})()))
+
+                for child in widget.winfo_children():
+                    bind_mousewheel_recursive(child)
+            except:
+                pass
+
+        # Привязываем к canvas и всем дочерним элементам
+        bind_mousewheel_recursive(self.scrollable_frame)
+        self.canvas.bind("<MouseWheel>", _on_mousewheel)
+        self.bind("<MouseWheel>", _on_mousewheel)
 
     def _create_mode_section(self, parent: tk.Widget) -> None:
         """
@@ -389,6 +485,22 @@ class SettingsView(tk.Frame):
         )
         reset_button.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=(2, 0))
 
+        # ДОПОЛНИТЕЛЬНО: Добавляем немного контента для тестирования scrollbar
+        for i in range(3):
+            test_frame = tk.LabelFrame(parent, text=f"🧪 Тестовая секция {i+1}", padx=10, pady=10)
+            test_frame.pack(fill=tk.X, padx=5, pady=5)
+
+            test_label = tk.Label(
+                test_frame,
+                text="Эта секция добавлена для демонстрации работы scrollbar.\n"
+                     "Когда содержимое превышает высоту окна, должна появиться прокрутка.",
+                font=("Arial", 8),
+                fg="#666666",
+                wraplength=250,
+                justify=tk.LEFT
+            )
+            test_label.pack(anchor=tk.W, pady=5)
+
     def _setup_bindings(self) -> None:
         """Настраивает обработчики событий."""
         # Обработчики изменений в виджетах
@@ -398,6 +510,9 @@ class SettingsView(tk.Frame):
         self.prompt_combo.bind("<<ComboboxSelected>>", self._on_prompt_change)
         self.threads_spinbox.bind("<FocusOut>", self._on_threads_change)
         self.output_entry.bind("<FocusOut>", self._on_output_file_change)
+
+        # Привязываем обновление scrollbar к изменению размера
+        self.bind("<Configure>", lambda e: self.after_idle(self._force_scrollbar_update))
 
     def update_from_model(self) -> None:
         """Обновляет виджеты на основе данных из модели."""
@@ -425,6 +540,9 @@ class SettingsView(tk.Frame):
 
         # Обновляем видимость секций
         self._update_sections_visibility()
+
+        # Принудительно обновляем scrollbar после обновления модели
+        self.after(200, self._force_scrollbar_update)
 
     def _update_combo_options(self) -> None:
         """Обновляет опции в выпадающих списках."""
@@ -474,6 +592,9 @@ class SettingsView(tk.Frame):
         else:
             self.online_frame.pack(fill=tk.X, padx=5, pady=5)
             self.offline_frame.pack_forget()
+
+        # Обновляем scrollbar после изменения видимости
+        self.after(100, self._force_scrollbar_update)
 
     # ========================
     # Обработчики событий
