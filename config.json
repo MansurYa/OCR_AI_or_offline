@@ -1,9 +1,9 @@
 {
     "openai_api_key": "sk-your-openai-key",
     "openai_organization": "org-your-org-id",
-    "openrouter_api_key": "",
-    "model_name": "gpt-4o-mini",
-    "larger_model_name": "gpt-4o-mini",
+    "openrouter_api_key": "sk-or-v1-",
+    "model_name": "openai/gpt-4o-mini",
+    "larger_model_name": "openai/gpt-4o-mini",
     "temperature": 0.0,
     "max_response_tokens": 16383,
     "max_total_tokens": 60000,
@@ -29,7 +29,7 @@
         }
     },
     "gui_settings": {
-        "window_size": "1440x793",
+        "window_size": "1440x900",
         "theme": "light",
         "auto_save_settings": true,
         "show_image_preview": true,
