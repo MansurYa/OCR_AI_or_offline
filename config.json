@@ -1,12 +1,12 @@
 {
     "openai_api_key": "sk-your-openai-key",
     "openai_organization": "org-your-org-id",
-    "openrouter_api_key": "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",
+    "openrouter_api_key": "",
     "model_name": "openai/gpt-4o-mini",
-    "larger_model_name": "openai/gpt-4o-mini",
+    "larger_model_name": "google/gemini-2.0-flash-001",
     "temperature": 0.0,
     "max_response_tokens": 16383,
-    "max_total_tokens": 60000,
+    "max_total_tokens": 100000,
     "use_openai_or_openrouter": "openrouter",
     "ocr_settings": {
         "offline": {
@@ -22,14 +22,14 @@
             ]
         },
         "online": {
-            "default_prompt": "classic_ocr",
+            "default_prompt": "handwritten_math_to_xelatex",
             "max_threads": 5,
             "timeout_seconds": 30,
             "retry_attempts": 3
         }
     },
     "gui_settings": {
-        "window_size": "1440x900",
+        "window_size": "1440x796",
         "theme": "light",
         "auto_save_settings": true,
         "show_image_preview": true,
